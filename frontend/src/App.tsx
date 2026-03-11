@@ -1,0 +1,75 @@
+import { useState } from 'react';
+import { ThemeProvider } from './components/ThemeProvider';
+import { Navbar } from './components/Navbar';
+import { Footer } from './components/Footer';
+import { Hero } from './components/Hero';
+import { UrlShortenerForm } from './components/UrlShortenerForm';
+import { UrlShortenerResult } from './components/UrlShortenerResult';
+
+function App() {
+	const [result, setResult] = useState<{
+		originalUrl: string;
+		shortUrl: string;
+		createdAt: string;
+	} | null>(null);
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+
+	// Mock submission handler - replace with React Query mutation later
+	const handleShorten = async (url: string, alias?: string) => {
+		setIsLoading(true);
+		setError(null);
+		setResult(null);
+
+		// Simulate network request
+		await new Promise((resolve) => setTimeout(resolve, 1500));
+
+		// Basic validation simulation
+		if (!url.includes('.') || url.length < 3) {
+			setError('Please enter a valid URL');
+			setIsLoading(false);
+			return;
+		}
+
+		setResult({
+			originalUrl: url,
+			shortUrl: `https://shrink.app/${alias || Math.random().toString(36).substring(7)}`,
+			createdAt: new Date().toISOString(),
+		});
+		setIsLoading(false);
+	};
+
+	return (
+		<ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+			<div className="min-h-screen font-body selection:bg-brand-500/30 selection:text-brand-200 overflow-x-hidden transition-colors duration-300">
+				<Navbar />
+
+				<main className="relative min-h-screen flex flex-col items-center justify-center p-6">
+					{/* Decorative Elements */}
+					<div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
+						<div className="absolute top-[20%] right-[10%] w-72 h-72 bg-brand-500/10 rounded-full blur-[100px]" />
+						<div className="absolute bottom-[20%] left-[10%] w-96 h-96 bg-cyan-600/10 rounded-full blur-[100px]" />
+					</div>
+
+					<div className="w-full max-w-4xl mx-auto flex flex-col items-center gap-8">
+						<Hero />
+
+						<UrlShortenerForm onSubmit={handleShorten} isLoading={isLoading} error={error} />
+
+						{result && (
+							<UrlShortenerResult
+								originalUrl={result.originalUrl}
+								shortUrl={result.shortUrl}
+								createdAt={result.createdAt}
+							/>
+						)}
+					</div>
+				</main>
+
+				<Footer />
+			</div>
+		</ThemeProvider>
+	);
+}
+
+export default App;
