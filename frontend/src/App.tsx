@@ -5,39 +5,10 @@ import { Footer } from './components/Footer';
 import { Hero } from './components/Hero';
 import { UrlShortenerForm } from './components/UrlShortenerForm';
 import { UrlShortenerResult } from './components/UrlShortenerResult';
+import { UrlResult } from './types/UrlShortener.types';
 
 function App() {
-	const [result, setResult] = useState<{
-		originalUrl: string;
-		shortUrl: string;
-		createdAt: string;
-	} | null>(null);
-	const [isLoading, setIsLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-
-	// Mock submission handler - replace with React Query mutation later
-	const handleShorten = async (url: string, alias?: string) => {
-		setIsLoading(true);
-		setError(null);
-		setResult(null);
-
-		// Simulate network request
-		await new Promise((resolve) => setTimeout(resolve, 1500));
-
-		// Basic validation simulation
-		if (!url.includes('.') || url.length < 3) {
-			setError('Please enter a valid URL');
-			setIsLoading(false);
-			return;
-		}
-
-		setResult({
-			originalUrl: url,
-			shortUrl: `https://shrink.app/${alias || Math.random().toString(36).substring(7)}`,
-			createdAt: new Date().toISOString(),
-		});
-		setIsLoading(false);
-	};
+	const [result, setResult] = useState<UrlResult | null>(null);
 
 	return (
 		<ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
@@ -54,12 +25,12 @@ function App() {
 					<div className="w-full max-w-4xl mx-auto flex flex-col items-center gap-8">
 						<Hero />
 
-						<UrlShortenerForm onSubmit={handleShorten} isLoading={isLoading} error={error} />
+						<UrlShortenerForm setResult={setResult} />
 
 						{result && (
 							<UrlShortenerResult
-								originalUrl={result.originalUrl}
-								shortUrl={result.shortUrl}
+								originalUrl={result.originalURL}
+								shortUrl={result.shortURL}
 								createdAt={result.createdAt}
 							/>
 						)}

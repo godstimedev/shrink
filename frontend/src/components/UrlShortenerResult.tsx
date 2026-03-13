@@ -27,7 +27,7 @@ export function UrlShortenerResult({ originalUrl, shortUrl, createdAt }: UrlShor
 				className="max-w-xl mx-auto w-full mt-8"
 			>
 				<div className="glass-panel rounded-2xl p-6 border-l-4 border-l-brand-500 relative overflow-hidden group">
-					<div className="absolute right-0 top-0 h-full w-32 bg-gradient-to-l from-brand-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+					<div className="absolute right-0 top-0 h-full w-32 bg-linear-to-l from-brand-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
 					<div className="relative z-10">
 						<div className="flex items-start justify-between gap-4 mb-4">
@@ -37,7 +37,7 @@ export function UrlShortenerResult({ originalUrl, shortUrl, createdAt }: UrlShor
 									{new Date(createdAt).toLocaleDateString()}
 								</p>
 								<div className="flex items-center gap-2 text-slate-500 text-sm mb-3">
-									<span className="truncate max-w-[200px] hover:text-slate-300 transition-colors">
+									<span className="truncate max-w-50 hover:text-slate-300 transition-colors">
 										{originalUrl}
 									</span>
 								</div>

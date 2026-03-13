@@ -1,12 +1,12 @@
-import { pool } from '../db/postgres/connection';
-import { client as RedisClient } from '../db/redis/connection';
-import { isValidShortCode, isValidUrl } from '../utils/validation';
+import { pool } from '../db/postgres/connection.js';
+import { client as RedisClient } from '../db/redis/connection.js';
+import { generateShorterCode } from '../utils/idGenerator.js';
+import { isValidShortCode, isValidUrl } from '../utils/validation.js';
 
 /**
  * POST /api/shorten
  * Creates a new shortened URL
  */
-
 export const createShortURL = async (req, res) => {
 	try {
 		const { url, customAlias } = req.body;
@@ -25,7 +25,7 @@ export const createShortURL = async (req, res) => {
 
 		if (customAlias && !isValidShortCode(customAlias)) {
 			return res.status(400).json({
-				error: 'Invalid custom alias format',
+				error: 'Invalid format, Custom alias should be alphanumeric, 6-10 characters',
 			});
 		}
 
@@ -69,5 +69,79 @@ export const createShortURL = async (req, res) => {
 		res.status(500).json({
 			error: 'Internal server error',
 		});
+	}
+};
+
+/**
+ * GET /api/:shortCode
+ * Retrieves the original URL and performs redirect
+ */
+export const getOriginalURL = async (req, res) => {
+	try {
+		const { shortCode } = req.params;
+
+		//Try to get from Redis cache first
+		let originalURL = await RedisClient.get(`url:${shortCode}`);
+
+		if (originalURL) {
+			console.log('Cache hit for:', shortCode);
+
+			//Increment clicks in background (dont wait for response)
+			pool.query('UPDATE urls SET clicks = clicks + 1 WHERE short_code = $1', [shortCode]);
+			return res.redirect(301, originalURL);
+		}
+
+		// Cache miss - query database
+		console.log('Cache miss for:', shortCode);
+		const result = await pool.query(
+			'SELECT original_url, expires_at FROM urls WHERE short_code = $1',
+			[shortCode],
+		);
+
+		if (result.rows.length === 0) {
+			return res.status(404).json({
+				error: 'Short URL not found',
+			});
+		}
+
+		const { original_url, expires_at } = result.rows[0];
+
+		// Check if expired
+		if (expires_at && new Date(expires_at) < new Date()) {
+			return res.status(410).json({ error: 'This link has expired' });
+		}
+
+		// Update cache and increment clicks
+		await RedisClient.setEx(`url:${shortCode}`, 86400, original_url);
+		await pool.query('UPDATE urls SET clicks = clicks + 1 WHERE short_code = $1', [shortCode]);
+
+		res.redirect(301, original_url);
+	} catch (error) {
+		console.error('Error retrieving URL:', error);
+		res.status(500).json({ error: 'Internal server error' });
+	}
+};
+
+/**
+ * GET /api/stats/:shortCode
+ * Get analytics for a shortened URL
+ */
+export const getStats = async (req, res) => {
+	try {
+		const { shortCode } = req.params;
+
+		const result = await pool.query(
+			'SELECT short_code, original_url, clicks, created_at, expires_at FROM urls WHERE short_code = $1',
+			[shortCode],
+		);
+
+		if (result.rows.length === 0) {
+			return res.status(404).json({ error: 'Short URL not found' });
+		}
+
+		res.json(result.rows[0]);
+	} catch (error) {
+		console.error('Error fetching stats:', error);
+		res.status(500).json({ error: 'Internal server error' });
 	}
 };

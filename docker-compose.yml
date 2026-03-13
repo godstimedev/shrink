@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+ postgres:
+  image: postgres:15
+  container_name: urlshortener-db
+  environment:
+   POSTGRES_USER: ${DB_USER}
+   POSTGRES_PASSWORD: ${DB_PASSWORD}
+   POSTGRES_DB: urlshortener
+  ports:
+   - '5433:5432'
+  volumes:
+   - pgdata:/var/lib/postgresql/data
+  healthcheck:
+   test: ['CMD-SHELL', 'pg_isready -U urluser']
+   interval: 10s
+   timeout: 5s
+   retries: 5
+
+ redis:
+  image: redis:7-alpine
+  container_name: urlshortener-cache
+  ports:
+   - '6379:6379'
+  healthcheck:
+   test: ['CMD', 'redis-cli', 'ping']
+   interval: 10s
+   timeout: 5s
+   retries: 5
+
+ backend:
+  build: ./backend
+  container_name: urlshortener-api
+  ports:
+   - '4000:4000'
+  environment:
+   - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/urlshortener
+   - REDIS_URL=redis://redis:6379
+   - NODE_ENV=production
+   - PORT=4000
+  depends_on:
+   postgres:
+    condition: service_healthy
+   redis:
+    condition: service_healthy
+
+ frontend:
+  build: ./frontend
+  container_name: urlshortener-web
+  ports:
+   - '3000:80'
+  environment:
+   - VITE_API_URL=http://localhost:4000/api
+  depends_on:
+   - backend
+
+volumes:
+ pgdata:
