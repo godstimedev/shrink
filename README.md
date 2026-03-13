@@ -1,4 +1,4 @@
-# Shrink Frontend
+# Shrink
 
 Shrink is a URL shortener application that allows users to shorten long URLs and generate custom short URLs. It also provides analytics on the number of clicks on each short URL.
 
@@ -12,6 +12,10 @@ Shrink is a URL shortener application that allows users to shorten long URLs and
 
 ## Tech Stack
 
+- Node.js
+- Express
+- PostgreSQL
+- Redis
 - React
 - TypeScript
 - Tailwind CSS
@@ -19,17 +23,10 @@ Shrink is a URL shortener application that allows users to shorten long URLs and
 
 ## Installation
 
-1. Clone the repository
-2. Install dependencies
+Docker Compose is used to run the application.
 
 ```bash
-npm install
-```
-
-## Usage
-
-```bash
-npm run dev
+docker compose up --build
 ```
 
 ## License
